@@ -1,0 +1,25 @@
+# ─────────────────────────────────────────────────────────────
+#  Adaptive ML System — Requirements
+#  Final Year Project | Phase 1 → Phase 4
+# ─────────────────────────────────────────────────────────────
+
+# Core scientific computing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Machine learning
+scikit-learn>=1.3.0
+
+# Visualisation
+matplotlib>=3.7.0
+Pillow>=10.0.0
+
+# Dashboard
+streamlit>=1.30.0
+
+# Testing
+pytest>=7.4.0
+
+# River library for native streaming algorithms
+# Used for optimized ADWIN execution
+river>=0.21.0

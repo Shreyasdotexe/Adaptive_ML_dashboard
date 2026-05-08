@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "adaptive-ml-system"
+version = "1.0.0"
+description = "Adaptive ML System for Concept Drift Detection and Online Model Re-Training"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Academic Use Only"}
+
+authors = [
+    {name = "Shreyas Kshirsagar"},
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "matplotlib>=3.7.0",
+    "Pillow>=10.0.0",
+    "streamlit>=1.30.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+]
+river = [
+    "river>=0.21.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.setuptools.packages.find]
+include = ["src*"]

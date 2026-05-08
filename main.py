@@ -81,7 +81,7 @@ def run_pipeline(config: dict) -> dict:
     timer.start()
     run_id = generate_run_id()
 
-    # Cleanup old runs to save space (keep only the current run)
+    # clear old files so the dashboard doesnt lag
     import glob
     for d in [config["plots_dir"], config["reports_dir"], config["log_dir"]]:
         if os.path.exists(d):

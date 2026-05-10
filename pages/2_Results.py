@@ -115,89 +115,22 @@ st.markdown("---")
 st.markdown("### Accuracy over time")
 st.markdown(
     '<p class="note">'
-    "The top panel shows running accuracy smoothed over recent predictions. "
-    "The vertical lines mark retraining events — you'll usually see a dip right "
-    "before each one, followed by recovery as the model adapts. "
+    "Running accuracy smoothed over recent predictions. Vertical lines mark ADWIN-triggered "
+    "retraining events — you'll see a V-shaped dip before each one, followed by recovery. "
     "If second-half accuracy stays close to first-half, drift adaptation is working."
     "</p>",
     unsafe_allow_html=True,
 )
 
-acc_img = safe_img(plots.get("accuracy", ""))
-if acc_img:
-    st.image(acc_img, use_container_width=True)
+_fig2 = os.path.join("outputs", "paper_figures", "fig2_running_accuracy.png")
+if os.path.exists(_fig2):
+    st.image(Image.open(_fig2), use_container_width=True)
 else:
-    st.caption("Accuracy plot not found.")
-
-st.markdown("---")
-
-# ─ Drift signal ────────────────────────────────────────────────────────────────
-
-st.markdown("### When did ADWIN see drift?")
-st.markdown(
-    '<p class="note">'
-    "This shows the rolling error rate fed into ADWIN. "
-    "Each red marker is a drift call — the point where the error rate "
-    "shifted enough for ADWIN to act. A cluster of markers suggests "
-    "a prolonged unstable period."
-    "</p>",
-    unsafe_allow_html=True,
-)
-
-drift_img = safe_img(plots.get("drift", ""))
-if drift_img:
-    st.image(drift_img, use_container_width=True)
-else:
-    st.caption("Drift signal plot not found.")
-
-st.markdown("---")
-
-# ─ Detection timeline ──────────────────────────────────────────────────────────
-
-st.markdown("### Detection timeline")
-st.markdown(
-    '<p class="note">'
-    "A stem plot of every individual drift event from ADWIN. "
-    "Even spacing suggests the detector is picking up periodic shifts. "
-    "Bursts of activity in one region point to concentrated instability there."
-    "</p>",
-    unsafe_allow_html=True,
-)
-
-tl_img = safe_img(plots.get("timeline", ""))
-if tl_img:
-    st.image(tl_img, use_container_width=True)
-else:
-    st.caption("Timeline plot not found.")
-
-st.markdown("---")
-
-# ─ Windowed accuracy ───────────────────────────────────────────────────────────
-
-st.markdown("### Windowed accuracy")
-st.markdown(
-    '<p class="note">'
-    "Unlike the cumulative accuracy above, this only looks at the last 500 "
-    "predictions at any point in time. It's a better signal of how the model "
-    "is doing *right now* vs. historically. Drops that recover quickly = "
-    "the retrain mechanism working. Drops that don't recover = worth investigating."
-    "</p>",
-    unsafe_allow_html=True,
-)
-
-w_img = safe_img(plots.get("windowed_accuracy", ""))
-if w_img:
-    st.image(w_img, use_container_width=True)
-
-w_acc = ev.get("windowed_accuracy", [])
-w_idx = ev.get("windowed_acc_indices", [])
-if w_acc and w_idx and len(w_acc) == len(w_idx):
-    with st.expander("Interactive chart"):
-        chart_df = pd.DataFrame({
-            "Sample": w_idx,
-            "Windowed accuracy": w_acc,
-        }).set_index("Sample")
-        st.line_chart(chart_df, use_container_width=True)
+    acc_img = safe_img(plots.get("accuracy", ""))
+    if acc_img:
+        st.image(acc_img, use_container_width=True)
+    else:
+        st.caption("Accuracy plot not found.")
 
 st.markdown("---")
 
@@ -298,34 +231,44 @@ st.markdown("---")
 
 # ─ Detector comparison ─────────────────────────────────────────────────────────
 
-st.markdown("### Detector comparison")
+st.markdown("### Detector comparison — ADWIN vs DDM vs EDDM")
 st.markdown(
     '<p class="note">'
     "All three detectors ran on the same error stream. "
-    "Only the primary one triggered retraining — the others just recorded "
-    "what they would have done. This table lets you compare their sensitivity."
+    "Only ADWIN triggered retraining — DDM and EDDM ran in parallel for comparison. "
+    "The chart below shows total detections, average inter-drift gap, and the full "
+    "detection timeline across all 45,312 samples."
     "</p>",
     unsafe_allow_html=True,
 )
 
+_fig1 = os.path.join("outputs", "paper_figures", "fig1_detector_comparison.png")
+if os.path.exists(_fig1):
+    st.image(Image.open(_fig1), use_container_width=True)
+else:
+    if comp:
+        rows = []
+        for name, stats in comp.items():
+            gap = stats.get("avg_inter_drift_gap")
+            rows.append({
+                "Detector":          name,
+                "Drifts detected":   stats.get("total_drifts", 0),
+                "Avg gap (samples)": f"{gap:,.0f}" if gap else "—",
+                "First 5 detections": str(stats.get("drift_indices", [])[:5]),
+            })
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+
 if comp:
+    st.markdown("**Detector summary table**")
     rows = []
     for name, stats in comp.items():
         gap = stats.get("avg_inter_drift_gap")
         rows.append({
-            "Detector":         name,
-            "Drifts detected":  stats.get("total_drifts", 0),
+            "Detector":          name,
+            "Drifts detected":   stats.get("total_drifts", 0),
             "Avg gap (samples)": f"{gap:,.0f}" if gap else "—",
-            "First 5 detections": str(stats.get("drift_indices", [])[:5]),
         })
     st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
-
-    st.markdown("**Detection count**")
-    bar_df = pd.DataFrame({
-        "Detector": list(comp.keys()),
-        "Detections": [v.get("total_drifts", 0) for v in comp.values()],
-    }).set_index("Detector")
-    st.bar_chart(bar_df, use_container_width=True)
 
 st.markdown("---")
 
@@ -361,26 +304,68 @@ else:
 
 st.markdown("---")
 
-# ─ Feature shift ───────────────────────────────────────────────────────────────
+# ─ Model comparison ─────────────────────────────────────────────────────────────
 
-st.markdown("### Feature distribution shift")
+st.markdown("### Model comparison — Static vs Continuous vs Adaptive")
 st.markdown(
     '<p class="note">'
-    "Comparing how each feature's distribution looked in the first half of the "
-    "stream versus the second. Big differences between the two halves = "
-    "the data really did change, confirming the drift signals above are real."
+    "Comparing three setups: a frozen static model, a continuously-updated model "
+    "(no resets), and the adaptive ADWIN model. The static model's accuracy drop "
+    "confirms concept drift is real. ADWIN outperforms the static baseline by over "
+    "15 percentage points across accuracy, F1, and kappa."
     "</p>",
     unsafe_allow_html=True,
 )
 
-f_img  = safe_img(plots.get("feature", ""))
-mf_img = safe_img(plots.get("multi_feature", ""))
-if f_img:
-    st.image(f_img, use_container_width=True)
-if mf_img:
-    st.image(mf_img, use_container_width=True)
-if not f_img and not mf_img:
-    st.caption("Feature distribution plots not found.")
+_fig3 = os.path.join("outputs", "paper_figures", "fig3_model_comparison.png")
+if os.path.exists(_fig3):
+    st.image(Image.open(_fig3), use_container_width=True)
+else:
+    st.caption("Model comparison figure not found. Run comparison.py to generate it.")
+
+st.markdown("---")
+
+# ─ Delta ablation ────────────────────────────────────────────────────────────────
+
+st.markdown("### ADWIN delta sensitivity")
+st.markdown(
+    '<p class="note">'
+    "How does changing ADWIN's delta parameter affect performance? Lower delta = "
+    "fewer resets, less post-reset accuracy loss, better overall accuracy. "
+    "At delta=0.001, only 5 resets were needed and accuracy reached 91.09%."
+    "</p>",
+    unsafe_allow_html=True,
+)
+
+_fig4 = os.path.join("outputs", "paper_figures", "fig4_delta_ablation.png")
+if os.path.exists(_fig4):
+    st.image(Image.open(_fig4), use_container_width=True)
+else:
+    st.caption("Delta ablation figure not found. Run comparison.py to generate it.")
+
+st.markdown("---")
+
+# ─ Confusion matrix + recovery ───────────────────────────────────────────────────
+
+st.markdown("### Confusion matrix & recovery analysis")
+st.markdown(
+    '<p class="note">'
+    "The confusion matrix confirms no majority-class bias (balanced TP/TN). "
+    "The recovery histogram shows how many samples the model needed after each reset "
+    "to climb back above 85% accuracy — all 27 drift events were fully recovered."
+    "</p>",
+    unsafe_allow_html=True,
+)
+
+_fig5 = os.path.join("outputs", "paper_figures", "fig5_cm_and_recovery.png")
+if os.path.exists(_fig5):
+    st.image(Image.open(_fig5), use_container_width=True)
+else:
+    cm_img = safe_img(plots.get("confusion_matrix", ""))
+    if cm_img:
+        st.image(cm_img, use_container_width=True)
+    else:
+        st.caption("Confusion matrix figure not found.")
 
 st.markdown("---")
 

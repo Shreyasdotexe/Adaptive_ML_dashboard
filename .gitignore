@@ -27,8 +27,6 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -63,13 +61,20 @@ ENV/
 env.bak/
 venv.bak/
 
-# Streamlit
+# Streamlit secrets
 .streamlit/secrets.toml
 
-# Outputs/Logs
-outputs/
+# Run outputs — logs and per-run plots are local only
+outputs/experiments/
+outputs/plots/
+outputs/reports/
 data/logs/
 *.log
+
+# Research papers — not for version control
+*.docx
+*.pdf
+insert_figures.py
 
 # OS generated files
 .DS_Store
